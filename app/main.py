@@ -25,9 +25,9 @@ async def set_body(request: Request, body: bytes):
         return {'type': 'http.request', 'body': body}
     request._receive = receive
 
-def log_info(req_body, res_body):
-    log.info(f"request body: {req_body.decode('utf-8')}")
-    log.info(f"response body: {res_body.decode('utf-8')}")
+def log_http(req_body, res_body):
+    log.debug(f"request body: {req_body.decode('utf-8')}")
+    log.debug(f"response body: {res_body.decode('utf-8')}")
 
 @app.middleware('http')
 async def some_middleware(request: Request, call_next):
@@ -39,6 +39,6 @@ async def some_middleware(request: Request, call_next):
     async for chunk in response.body_iterator:
         res_body += chunk
     
-    task = BackgroundTask(log_info, req_body, res_body)
+    task = BackgroundTask(log_http, req_body, res_body)
     return Response(content=res_body, status_code=response.status_code, 
         headers=dict(response.headers), media_type=response.media_type, background=task)

@@ -22,13 +22,20 @@ async def upsource_webhook(request: Request):
         revisions = event["data"]["revisions"]
 
         if settings.CODE_REVIEW_TOOL == "upsource":
-            code_review_tool = Upsource(base_url=settings.CODE_REVIEW_BASE_URL, username=settings.CODE_REVIEW_TOOL_ACCOUNT_USERNAME, password=settings.CODE_REVIEW_TOOL_ACCOUNT_PASSWORD, connect_timeout=10.0, read_timeout=10.0, project_id=project_id, review_id=review_id, revisions=revisions)
+            code_review_tool = Upsource(base_url=settings.CODE_REVIEW_BASE_URL,
+                                        username=settings.CODE_REVIEW_TOOL_ACCOUNT_USERNAME,
+                                        password=settings.CODE_REVIEW_TOOL_ACCOUNT_PASSWORD,
+                                        connect_timeout=10.0,
+                                        read_timeout=10.0,
+                                        project_id=project_id,
+                                        review_id=review_id,
+                                        revisions=revisions)
 
-        webhook = Webhook(uri=settings.WEBHOOK_URI, body=event)
+        webhook = Webhook(uri=settings.WEBHOOK_URI,
+                          body=event,
+                          code_review_url=code_review_tool.base_url)
         review_details = await code_review_tool.get_review_details(event)
-        asyncio.create_task(webhook.send_message_to_google_chat(review_details=review_details, code_review_url=code_review_tool.base_url, get_message=Webhook.get_message_by_created_review))
-
-
+        asyncio.create_task(webhook.send_message(review_details=review_details))
 
         if event.get("dataType") != "ReviewCreatedFeedEventBean":
             return {"status": "success"}
