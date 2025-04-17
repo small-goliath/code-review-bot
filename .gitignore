@@ -1,0 +1,8 @@
+.DS_Store
+.vscode
+__pycache__/
+.env
+backup
+logs
+chrome/
+setup_cron.sh
