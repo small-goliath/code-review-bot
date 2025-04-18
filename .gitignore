@@ -6,3 +6,4 @@ backup
 logs
 chrome/
 setup_cron.sh
+HELP.md

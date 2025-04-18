@@ -3,12 +3,19 @@ from typing import Any, Dict
 from app.core.service import CodeReviewTool
 
 class Upsource(CodeReviewTool):
+    def __init__(self, base_url: str, username: str, password: str,
+                 connect_timeout: float, read_timeout: float,
+                 project_id: str, review_id: str, revisions: list[str]):
+        super().__init__(base_url, username, password, connect_timeout, read_timeout)
+        self.project_id = project_id
+        self.review_id = review_id
+        self.revisions = revisions
+
     def _build_url(self, path: str) -> str:
         return f"{self.base_url}/{path}"
 
     async def _post(self, path: str, payload: dict) -> dict:
         url = self._build_url(path)
-        self.log.debug(f"POST 요청: {url} | 페이로드: {payload}")
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.post(
                 url,
@@ -53,7 +60,7 @@ class Upsource(CodeReviewTool):
         }
         return await self._post("~rpc/getFileContent", payload)
 
-    async def add_comment_to_upsource(self, comment: str) -> None:
+    async def add_comment(self, comment: str) -> None:
         self.log.info("AI 리뷰 코멘트를 Upsource에 등록합니다.")
         payload = {
             "anchor": {},

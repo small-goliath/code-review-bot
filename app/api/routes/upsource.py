@@ -3,7 +3,10 @@ import asyncio
 import traceback
 from pathlib import Path
 from fastapi import APIRouter, Request
-from app.core.gpt.gpt import GPT
+from app.core import adapter
+from app.core.gpt import GPT
+from app.core.model import EventType, WebhookMessage
+from app.core.notification import GoogleChat, Slack
 from app.core.service import CodeReviewTool, Webhook
 from app.core.upsource import Upsource
 from app.logger import get_logger
@@ -21,55 +24,57 @@ async def upsource_webhook(request: Request):
         project_id = event["projectId"]
         revisions = event["data"]["revisions"]
 
-        if settings.CODE_REVIEW_TOOL == "upsource":
-            code_review_tool = Upsource(base_url=settings.CODE_REVIEW_BASE_URL,
-                                        username=settings.CODE_REVIEW_TOOL_ACCOUNT_USERNAME,
-                                        password=settings.CODE_REVIEW_TOOL_ACCOUNT_PASSWORD,
-                                        connect_timeout=10.0,
-                                        read_timeout=10.0,
-                                        project_id=project_id,
-                                        review_id=review_id,
-                                        revisions=revisions)
+        upsource = Upsource(base_url=settings.UPSOURCE_BASE_URL,
+                            username=settings.UPSOURCE_USERNAME,
+                            password=settings.UPSOURCE_PASSWORD,
+                            connect_timeout=10.0,
+                            read_timeout=10.0,
+                            project_id=project_id,
+                            review_id=review_id,
+                            revisions=revisions)
 
-        webhook = Webhook(uri=settings.WEBHOOK_URI,
-                          body=event,
-                          code_review_url=code_review_tool.base_url)
-        review_details = await code_review_tool.get_review_details(event)
-        asyncio.create_task(webhook.send_message(review_details=review_details))
+        review_details = await upsource.get_review_details(event)
+        message_format = await WebhookMessage.from_upsource(event, review_details['result']['title'])
+        webhook = adapter.get_notification(webhook=settings.WEBHOOK,
+                                           uri=settings.WEBHOOK_URI,
+                                           message_format=message_format,
+                                           code_review_url=upsource.base_url)
+        asyncio.create_task(webhook.send_message())
 
-        if event.get("dataType") != "ReviewCreatedFeedEventBean":
+        if message_format.event_type != EventType.CREATED_REVIEW:
             return {"status": "success"}
 
-        files = await code_review_tool.get_file_changes()
-        review_comments = []
+        files = await upsource.get_file_changes()
+        # review_comments = []
 
-        for file in files['result']['diff']['diff']:
-            # 각 변경된 파일에 대한 코드 가져오기
-            if 'oldFile' in file:
-                old_file_name, old_code = await process_file(file['oldFile'], code_review_tool)
-            new_file_name, new_code = await process_file(file['newFile'], code_review_tool)
+        # for file in files['result']['diff']['diff']:
+        #     # 각 변경된 파일에 대한 코드 가져오기
+        #     if 'oldFile' in file:
+        #         old_file_name, old_code = await process_file(file['oldFile'], upsource)
+        #     new_file_name, new_code = await process_file(file['newFile'], upsource)
 
-            if not new_file_name:
-                continue
+        #     if not new_file_name:
+        #         continue
 
-            # openai 코드 리뷰 요청
-            gpt = GPT()
-            comment = await gpt.generate_code_review(
-                old_file_name, old_code, new_file_name, new_code
-            )
-            if comment:
-                review_comments.append(comment)
+        #     # openai 코드 리뷰 요청
+        #     gpt = GPT()
+        #     comment = await gpt.generate_code_review(
+        #         old_file_name, old_code, new_file_name, new_code
+        #     )
+        #     if comment:
+        #         review_comments.append(comment)
 
         # upsource 코드 리뷰 내용 작성
-        if review_comments:
-            await code_review_tool.add_comment_to_upsource(review_comments)
-        else:
-            log.warning("생성된 리뷰 코멘트가 없습니다.")
+        
+        # if review_comments:
+        #     await upsource.add_comment(review_comments)
+        # else:
+        #     log.warning("생성된 리뷰 코멘트가 없습니다.")
 
         return {"status": "success"}
 
     except Exception as e:
-        log.error(f"웹훅 처리 중 오류 발생: {e}")
+        log.error(f"오류 발생: {e}")
         traceback.print_exc()
         return {"status": "error", "message": str(e)}
 
