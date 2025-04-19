@@ -17,8 +17,8 @@ async def upsource_webhook(request: Request):
     try:
         event = await request.json()
         github = adapter.get_code_review_tool(code_review_tool=settings.CODE_REVIEW_TOOL,
-                                              base_url=settings.GITLAB_BASE_URL,
-                                              private_token=settings.GITLAB_ACCESS_TOKEN)
+                                              base_url=settings.GITHUB_BASE_URL,
+                                              private_token=settings.GITHUB_ACCESS_TOKEN)
         
         message_format = await WebhookMessage.from_gitlab(event)
         webhook = adapter.get_notification(webhook=settings.WEBHOOK,
