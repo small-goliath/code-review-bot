@@ -3,9 +3,14 @@ from typing import Any, Dict
 from app.core.service import CodeReviewTool
 
 class Upsource(CodeReviewTool):
-    def __init__(self, base_url: str, username: str, password: str,
-                 connect_timeout: float, read_timeout: float,
-                 project_id: str, review_id: str, revisions: list[str]):
+    def __init__(self, base_url: str,
+                 username: str,
+                 password: str,
+                 connect_timeout: float,
+                 read_timeout: float,
+                 project_id: str,
+                 review_id: str,
+                 revisions: list[str]):
         super().__init__(base_url, username, password, connect_timeout, read_timeout)
         self.project_id = project_id
         self.review_id = review_id
@@ -29,11 +34,11 @@ class Upsource(CodeReviewTool):
                 raise
             return response.json()
 
-    async def get_review_details(self, review: Dict[str, Any]) -> dict:
+    async def get_review_details(self) -> dict:
         self.log.info("Upsource 리뷰 상세 정보를 조회합니다.")
         payload = {
-            "projectId": review["projectId"],
-            "reviewId": review["data"]["base"]["reviewId"],
+            "projectId": self.project_id,
+            "reviewId": self.review_id,
         }
         return await self._post("~rpc/getReviewDetails", payload)
 
@@ -60,7 +65,7 @@ class Upsource(CodeReviewTool):
         }
         return await self._post("~rpc/getFileContent", payload)
 
-    async def add_comment(self, comment: str) -> None:
+    async def add_comment(self, comments: list[str]) -> None:
         self.log.info("AI 리뷰 코멘트를 Upsource에 등록합니다.")
         payload = {
             "anchor": {},
@@ -68,7 +73,7 @@ class Upsource(CodeReviewTool):
                 "projectId": self.project_id,
                 "reviewId": self.review_id,
             },
-            "text": comment,
+            "text": "\n\n".join(comments),
             "projectId": self.project_id,
             "labels": {"name": "ai-review"},
         }

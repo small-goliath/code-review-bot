@@ -5,26 +5,25 @@ from app.core.service import CodeReviewTool
 class Gitlab(CodeReviewTool):
     def __init__(self, base_url: str,
                  private_token: str,
-                 project_path: str):
+                 project_id: str,
+                 merge_request_iid: int):
         super().__init__(base_url)
         self.private_token = private_token
         self.gl = gitlab.Gitlab(url=self.base_url, private_token=self.private_token)
-        self.project_path = project_path
+        self.project_id = project_id
+        self.merge_request_iid = merge_request_iid
+        self.project = self.gl.projects.get(self.project_id)
+        self.mr = self.project.mergerequests.get(self.merge_request_iid)
 
-    def get_review_details(event: dict) -> Dict[str, Any]:
-        return {
-            ""
-        }
+    async def get_review_details(self) -> Dict[str, Any]:
+        pass
 
-    def get_file_changes(self) -> Dict[str, Any]:
-        """Merge Request에서 변경된 파일 목록"""
+    async def get_file_changes(self) -> Dict[str, Any]:
         return self.mr.changes()
 
-    def get_code(self, file_path: str, ref: str) -> str:
-        """지정된 브랜치(ref)의 파일 내용"""
-        f = self.project.files.get(file_path=file_path, ref=ref)
-        return f.decode().decode('utf-8')
+    async def get_code(self, file_path: str, ref: str) -> str:
+        pass
 
-    def add_comment(self, comment: str) -> None:
-        """Merge Request에 코멘트 추가"""
-        self.mr.notes.create({'body': f"[AI Review]\n{comment}"})
+    async def add_comment(self, comments: list[str]) -> None:
+        comment = "\n\n".join(comments)
+        self.mr.notes.create({'body': comment})

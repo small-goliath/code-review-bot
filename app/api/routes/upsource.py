@@ -6,9 +6,7 @@ from fastapi import APIRouter, Request
 from app.core import adapter
 from app.core.gpt import GPT
 from app.core.model import EventType, WebhookMessage
-from app.core.notification import GoogleChat, Slack
-from app.core.service import CodeReviewTool, Webhook
-from app.core.upsource import Upsource
+from app.core.service import CodeReviewTool
 from app.logger import get_logger
 from app.config import settings
 
@@ -24,7 +22,7 @@ async def upsource_webhook(request: Request):
         project_id = event["projectId"]
         revisions = event["data"]["revisions"]
 
-        upsource = Upsource(base_url=settings.UPSOURCE_BASE_URL,
+        upsource = adapter.get_code_review_tool(base_url=settings.UPSOURCE_BASE_URL,
                             username=settings.UPSOURCE_USERNAME,
                             password=settings.UPSOURCE_PASSWORD,
                             connect_timeout=10.0,
@@ -45,31 +43,30 @@ async def upsource_webhook(request: Request):
             return {"status": "success"}
 
         files = await upsource.get_file_changes()
-        # review_comments = []
+        review_comments = []
 
-        # for file in files['result']['diff']['diff']:
-        #     # 각 변경된 파일에 대한 코드 가져오기
-        #     if 'oldFile' in file:
-        #         old_file_name, old_code = await process_file(file['oldFile'], upsource)
-        #     new_file_name, new_code = await process_file(file['newFile'], upsource)
+        for file in files['result']['diff']['diff']:
+            # 각 변경된 파일에 대한 코드 가져오기
+            if 'oldFile' in file:
+                old_file_name, old_code = await process_file(file['oldFile'], upsource)
+            new_file_name, new_code = await process_file(file['newFile'], upsource)
 
-        #     if not new_file_name:
-        #         continue
+            if not new_file_name:
+                continue
 
-        #     # openai 코드 리뷰 요청
-        #     gpt = GPT()
-        #     comment = await gpt.generate_code_review(
-        #         old_file_name, old_code, new_file_name, new_code
-        #     )
-        #     if comment:
-        #         review_comments.append(comment)
+            # openai 코드 리뷰 요청
+            gpt = GPT()
+            comment = await gpt.generate_code_review(
+                old_file_name, old_code, new_file_name, new_code
+            )
+            if comment:
+                review_comments.append(comment)
 
         # upsource 코드 리뷰 내용 작성
-        
-        # if review_comments:
-        #     await upsource.add_comment(review_comments)
-        # else:
-        #     log.warning("생성된 리뷰 코멘트가 없습니다.")
+        if review_comments:
+            await upsource.add_comment(review_comments)
+        else:
+            log.warning("생성된 리뷰 코멘트가 없습니다.")
 
         return {"status": "success"}
 

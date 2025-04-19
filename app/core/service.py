@@ -7,8 +7,11 @@ from app.logger import get_logger
 class CodeReviewTool(ABC):
     log = get_logger("code-review-tool")
 
-    def __init__(self, base_url: str, username: str = None, password: str = None,
-                 connect_timeout: float = 10.0, read_timeout: float = 10.0):
+    def __init__(self, base_url: str,
+                 username: str = None,
+                 password: str = None,
+                 connect_timeout: float = 10.0,
+                 read_timeout: float = 10.0):
         self.base_url = base_url
         self.username = username
         self.password = password
@@ -32,7 +35,7 @@ class CodeReviewTool(ABC):
         pass
 
     @abstractmethod
-    async def add_comment(self, comment: str):
+    async def add_comment(self, comments: list[str]):
         pass
 
 class Webhook(ABC):
