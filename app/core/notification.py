@@ -34,6 +34,7 @@ class GoogleChat(Webhook):
             )
             response.raise_for_status()
 
+# TODO: used slack_sdk lib
 class Slack(Webhook):
     async def send_message(self):
         self.log.info("slack 알림 발송 중...")
@@ -46,6 +47,7 @@ class Slack(Webhook):
             )
             response.raise_for_status()
 
+# TODO: used discord lib
 class Discord(Webhook):
     async def send_message(self):
         self.log.info("discord 알림 발송 중...")

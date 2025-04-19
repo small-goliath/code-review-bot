@@ -4,7 +4,7 @@ import traceback
 from fastapi import APIRouter, Request
 from app.core import adapter
 from app.core.gpt import GPT
-from app.core.model import WebhookMessage
+from app.core.model import EventType, WebhookMessage
 from app.logger import get_logger
 from app.config import settings
 
@@ -28,6 +28,10 @@ async def upsource_webhook(request: Request):
                                            message_format=message_format,
                                            code_review_url=gitlab.base_url)
         asyncio.create_task(webhook.send_message())
+
+        if message_format.event_type != EventType.CREATED_REVIEW:
+            return {"status": "success"}
+
         changes = await gitlab.get_file_changes()
 
         review_comments = []
@@ -50,6 +54,7 @@ async def upsource_webhook(request: Request):
         else:
             log.warning("생성된 리뷰 코멘트가 없습니다.")
 
+        return {"status": "success"}
     except Exception as e:
         log.error(f"오류 발생: {e}")
         traceback.print_exc()

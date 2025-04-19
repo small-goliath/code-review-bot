@@ -1,5 +1,6 @@
 from typing import Optional
 from app.core.gitlab import Gitlab
+from github import Github, Auth
 from app.core.model import WebhookMessage
 from app.core.notification import Discord, GoogleChat, Slack
 from app.core.service import CodeReviewTool, Webhook
@@ -45,6 +46,10 @@ def get_code_review_tool(code_review_tool: str,
                           private_token=private_token,
                           project_id=project_id,
                           merge_request_iid=mr_iid)
+        elif code_review_tool == 'github':
+            auth = Auth.Token(private_token)
+            return Github(base_url=f"{base_url}/api/v3",
+                          auth=auth)
         else:
             raise Exception(f"{code_review_tool}는 지원되지 않습니다.")
      

@@ -19,10 +19,15 @@ class Settings(BaseSettings):
     GITLAB_BASE_URL: Optional[str] = None
     GITLAB_ACCESS_TOKEN: Optional[str] = None
 
+    GITHUB_BASE_URL: Optional[str] = None
+    GITHUB_ACCESS_TOKEN: Optional[str] = None
+
+    # openai
     OPENAI_API_KEYS: str
     OPENAI_MODEL: str
     REVIEW_FILES_RAW: str
 
+    # webhook
     WEBHOOK: Literal["google-chat", "slack", "discord"]
     WEBHOOK_URI: str
 

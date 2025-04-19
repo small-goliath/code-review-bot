@@ -69,3 +69,17 @@ pip install -r requirements.txt
 # 개발 서버 실행
 uvicorn app.main:app --reload --env-file .env --log-config logging.conf
 </pre>
+
+
+---
+
+# 📑 Reference
+- https://docs.github.com/ko/webhooks/webhook-events-and-payloads
+- https://pygithub.readthedocs.io/en/stable/reference.html
+- https://gitlab.rsupport.com/help/user/project/integrations/webhook_events.md#comment-events
+- https://python-gitlab.readthedocs.io/en/stable/api-objects.html
+- https://upsource.plus4u.net/upsource/~api_doc/reference/Service.html#messages.UpsourceRPC
+- https://upsource.rsup.at/~api_doc/index.html#webhooks
+- https://discord.com/developers/docs/resources/webhook
+- https://api.slack.com/messaging/webhooks
+- https://developers.google.com/workspace/chat/quickstart/webhooks?hl=ko

@@ -67,3 +67,13 @@ class WebhookMessage():
                               review_id = gitlab_event['object_attributes']['iid'],
                               new_state = gitlab_event['object_attributes'].get('action', None),
                               comment = gitlab_event.get('commit', {}).get('message', None))
+    
+    async def from_github(github_event: dict) -> 'WebhookMessage' :
+        return WebhookMessage(title=f"{github_event['object_attributes']['source_branch']} into {github_event['object_attributes']['target_branch']}",
+                              project_name=github_event['project']['name'],
+                              event_type = EventType.get_type(github_event['event_type']),
+                              actor_name = github_event['user']['name'],
+                              reviewers = ', '.join(user.get('name', '') for user in github_event.get('reviewers',[])),
+                              review_id = github_event['number'],
+                              new_state = github_event.get('action', None),
+                              comment = github_event.get('commit', {}).get('message', None))
