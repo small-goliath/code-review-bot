@@ -16,7 +16,7 @@ log = get_logger('review-bot')
 async def upsource_webhook(request: Request):
     try:
         event = await request.json()
-        gitlab = adapter.get_code_review_tool(code_review_tool="gitlab",
+        gitlab = adapter.get_code_review_tool(code_review_tool=settings.CODE_REVIEW_TOOL,
                                               base_url=settings.GITLAB_BASE_URL,
                                               private_token=settings.GITLAB_ACCESS_TOKEN,
                                               project_id=event['project']['id'],
