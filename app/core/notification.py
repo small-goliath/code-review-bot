@@ -1,3 +1,4 @@
+from discord_webhook.webhook import DiscordWebhook
 import httpx
 from app.core.service import Webhook
 
@@ -46,7 +47,6 @@ class Slack(Webhook):
             )
             response.raise_for_status()
 
-# TODO: used discord lib
 class Discord(Webhook):
     async def send_message(self):
         self.log.info(f"discord 알림 발송 중...{self.uri}")
@@ -54,6 +54,14 @@ class Discord(Webhook):
         text = message.get("text", "")
         attachment = message.get("attachments", [{}])[0]
         fields = attachment.get("fields", [])
+        embeds = [
+            {
+                "fields": [{"name": field.get("title", ""), "value": field.get("value", ""), "inline": True} for field in fields],
+                "color": 1127128
+            }
+        ]
+
+        discord = DiscordWebhook(url=self.uri, content=text, embeds=embeds)
 
         message = {
             "content": text,
@@ -65,12 +73,4 @@ class Discord(Webhook):
             ]
         }
 
-        if len(message) > 2000:
-            message = message[:1997] + "..."
-
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                self.uri,
-                json=message
-            )
-            response.raise_for_status()
+        discord.execute()
