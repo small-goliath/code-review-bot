@@ -23,7 +23,7 @@ class CodeReviewTool(ABC):
         )
     
     @abstractmethod
-    async def get_review_details(self, review: Dict[str, Any]):
+    async def get_review_details(self):
         pass
 
     @abstractmethod
@@ -86,10 +86,10 @@ class Webhook(ABC):
         return {"text": text, **self._build_attachment(fields, text, "#F35A00")}
 
 
-    def _get_message_by_changed_review_state(self, title: str, review: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_message_by_changed_review_state(self, title: str) -> Dict[str, Any]:
         info = self._get_review_info()
-        old_state, new_state = review['data']['oldState'], review['data']['newState']
-        state_map = {0: '_Open_', 1: '_Closed_'}
+        old_state, new_state = self.message_format.old_state, self.message_format.new_state
+        state_map = {0: '`Open`', 1: '`Closed`'}
         # TODO: gitlab에서는 old_state가 없음
         text = f"리뷰 상태가 {state_map[old_state]}에서 {state_map[new_state]}로 변경되었습니다: *{title}* ({info['review_id']})"
 
@@ -103,13 +103,13 @@ class Webhook(ABC):
         return {"text": text, **self._build_attachment(fields, text, color)}
 
 
-    def _get_message_by_changed_participant_state(self, title: str, review: Dict[str, Any]) -> Dict[str, Any]:
+    def _get_message_by_changed_participant_state(self, title: str) -> Dict[str, Any]:
         info = self._get_review_info()
-        participant = review['data']['participant'].get('userName') or review['data']['participant'].get('userId', 'unknown')
-        old_state, new_state = review['data']['oldState'], review['data']['newState']
-        state_map = {0: '_Unread_', 1: '_Read_', 2: '_Accepted_', 3: '_Rejected_'}
+        # participant = review['data']['participant'].get('userName') or review['data']['participant'].get('userId', 'unknown')
+        old_state, new_state = self.message_format.old_state, self.message_format.new_state
+        state_map = {0: '`Unread`', 1: '`Read`', 2: '`Accepted`', 3: '`Rejected`'}
         # TODO: gitlab에서는 old_state가 없음
-        text = f"{participant}님이 {state_map[old_state]}에서 {state_map[new_state]}로 변경하였습니다: *{title}* ({info['review_id']})"
+        text = f"*{info['actor']}*님이 {state_map[old_state]}에서 {state_map[new_state]}로 변경하였습니다: *{title}* ({info['review_id']})"
 
         fields = [
             {"title": "Project", "value": info['project_id'], "short": True},
@@ -146,6 +146,6 @@ class Webhook(ABC):
         elif self.message_format.event_type == EventType.CHANGED_REVIEWER_STATE:
             return self._get_message_by_changed_participant_state(message_format.title)
         elif self.message_format.event_type == EventType.CREATED_COMMENT:
-            return self._get_message_by_created_discussion(message_format.title)
+            return self._get_message_by_created_discussion()
         else:
             raise Exception(f'{self.message_format.event_type}은 지원되지 않습니다.')

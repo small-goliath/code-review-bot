@@ -1,5 +1,6 @@
 
 import asyncio
+from pathlib import Path
 import traceback
 from fastapi import APIRouter, Request
 from app.core import adapter
@@ -38,11 +39,16 @@ async def upsource_webhook(request: Request):
 
         for file in changes['changes']:
             file_path = file['new_path']
+            ext = Path(file_path).suffix.lstrip(".")
+
+            if ext not in settings.REVIEW_FILES:
+                log.warning(f"{ext} 확장자는 리뷰 대상이 아닙니다.")
+                continue
             diff = file['diff']
 
             # openai 코드 리뷰 요청
             gpt = GPT()
-            comment = await gpt.generate_code_review(
+            comment = await gpt.generate_code_review_by_diff(
                 file_name=file_path, diff=diff
             )
             if comment:

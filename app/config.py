@@ -1,10 +1,11 @@
+import os
 from typing import Literal, Optional
 from pydantic import computed_field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file="../.env",
+        env_file="./.env",
         env_ignore_empty=True,
         extra="ignore",
     )
@@ -60,3 +61,5 @@ class Settings(BaseSettings):
         return values
 
 settings = Settings()
+print(settings.WEBHOOK_URI)
+print(os.environ.get('WEBHOOK_URI'))

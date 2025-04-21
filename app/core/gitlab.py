@@ -15,14 +15,8 @@ class Gitlab(CodeReviewTool):
         self.project = self.gl.projects.get(self.project_id)
         self.mr = self.project.mergerequests.get(self.merge_request_iid)
 
-    async def get_review_details(self) -> Dict[str, Any]:
-        pass
-
     async def get_file_changes(self) -> Dict[str, Any]:
         return self.mr.changes()
-
-    async def get_code(self, file_path: str, ref: str) -> str:
-        pass
 
     async def add_comment(self, comments: list[str]) -> None:
         comment = "\n\n".join(comments)

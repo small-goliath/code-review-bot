@@ -6,7 +6,7 @@ class GPT():
     log = get_logger("openai")
     openai_client = OpenAI(api_key=settings.OPENAI_API_KEYS)
 
-    async def generate_code_review(self, old_file_name: str, old_file_code: str, new_file_name: str, new_file_code: str):
+    async def generate_code_review_by_files(self, old_file_name: str, old_file_code: str, new_file_name: str, new_file_code: str):
         self.log.info("리뷰 중...")
         prompt = "아래 코드를 한국어로 코드리뷰해줘."
         if old_file_name is None:
@@ -43,7 +43,7 @@ class GPT():
         self.log.debug(f"prompt {response.usage.prompt_tokens} tokens, completion {response.usage.completion_tokens} tokens: 총 {response.usage.total_tokens} tokens 사용")
         return response.choices[0].message.content
 
-    async def generate_code_review(self, file_name: str, diff: str):
+    async def generate_code_review_by_diff(self, file_name: str, diff: str):
         self.log.info("리뷰 중...")
         prompt = f"""
             아래 코드는 특정 파일의 몇 번 라인의 코드가 어떻게 변경되었는지에 대한 내용을 다루고있어.

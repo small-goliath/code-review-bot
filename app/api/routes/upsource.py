@@ -20,18 +20,17 @@ async def upsource_webhook(request: Request):
         event = await request.json()
         review_id = event["data"]["base"]["reviewId"]
         project_id = event["projectId"]
-        revisions = event["data"]["revisions"]
+        revisions = event["data"].get("revisions", "")
 
-        upsource = adapter.get_code_review_tool(base_url=settings.UPSOURCE_BASE_URL,
-                            username=settings.UPSOURCE_USERNAME,
-                            password=settings.UPSOURCE_PASSWORD,
-                            connect_timeout=10.0,
-                            read_timeout=10.0,
-                            project_id=project_id,
-                            review_id=review_id,
-                            revisions=revisions)
+        upsource = adapter.get_code_review_tool(code_review_tool=settings.CODE_REVIEW_TOOL,
+                                                base_url=settings.UPSOURCE_BASE_URL,
+                                                username=settings.UPSOURCE_USERNAME,
+                                                password=settings.UPSOURCE_PASSWORD,
+                                                project_id=project_id,
+                                                review_id=review_id,
+                                                revisions=revisions)
 
-        review_details = await upsource.get_review_details(event)
+        review_details = await upsource.get_review_details()
         message_format = await WebhookMessage.from_upsource(event, review_details['result']['title'])
         webhook = adapter.get_notification(webhook=settings.WEBHOOK,
                                            uri=settings.WEBHOOK_URI,
@@ -56,7 +55,7 @@ async def upsource_webhook(request: Request):
 
             # openai 코드 리뷰 요청
             gpt = GPT()
-            comment = await gpt.generate_code_review(
+            comment = await gpt.generate_code_review_by_files(
                 old_file_name, old_code, new_file_name, new_code
             )
             if comment:

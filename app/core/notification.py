@@ -3,7 +3,7 @@ from app.core.service import Webhook
 
 class GoogleChat(Webhook):
     async def send_message(self):
-        self.log.info("google chat 알림 발송 중...")
+        self.log.info(f"google chat 알림 발송 중...{self.uri}")
         message = self._get_message(self.message_format)
         text = message.get("text", "")
         attachment = message.get("attachments", [{}])[0]
@@ -25,7 +25,6 @@ class GoogleChat(Webhook):
         headers = {
             "Content-Type": "application/json"
         }
-
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 self.uri,
@@ -37,7 +36,7 @@ class GoogleChat(Webhook):
 # TODO: used slack_sdk lib
 class Slack(Webhook):
     async def send_message(self):
-        self.log.info("slack 알림 발송 중...")
+        self.log.info(f"slack 알림 발송 중...{self.uri}")
         message = self._get_message(self.message_format)
 
         async with httpx.AsyncClient() as client:
@@ -50,7 +49,7 @@ class Slack(Webhook):
 # TODO: used discord lib
 class Discord(Webhook):
     async def send_message(self):
-        self.log.info("discord 알림 발송 중...")
+        self.log.info(f"discord 알림 발송 중...{self.uri}")
         message = self._get_message(self.message_format)
         text = message.get("text", "")
         attachment = message.get("attachments", [{}])[0]
