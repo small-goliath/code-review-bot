@@ -83,3 +83,5 @@ uvicorn app.main:app --reload --env-file .env --log-config logging.conf
 - https://discord.com/developers/docs/resources/webhook
 - https://api.slack.com/messaging/webhooks
 - https://developers.google.com/workspace/chat/quickstart/webhooks?hl=ko
+- https://pypi.org/project/discord-webhook/
+- https://pypi.org/project/slack-webhook/

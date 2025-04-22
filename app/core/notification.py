@@ -1,4 +1,5 @@
 from discord_webhook.webhook import DiscordWebhook
+import slack_webhook
 import httpx
 from app.core.service import Webhook
 
@@ -34,18 +35,12 @@ class GoogleChat(Webhook):
             )
             response.raise_for_status()
 
-# TODO: used slack_sdk lib
 class Slack(Webhook):
     async def send_message(self):
         self.log.info(f"slack 알림 발송 중...{self.uri}")
         message = self._get_message(self.message_format)
-
-        async with httpx.AsyncClient() as client:
-            response = await client.post(
-                self.uri,
-                json=message
-            )
-            response.raise_for_status()
+        slack = slack_webhook.Slack(url=self.uri)
+        slack.post(text=message['text'], attachments=message['attachments'])
 
 class Discord(Webhook):
     async def send_message(self):
