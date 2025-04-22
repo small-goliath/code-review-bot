@@ -57,15 +57,4 @@ class Discord(Webhook):
         ]
 
         discord = DiscordWebhook(url=self.uri, content=text, embeds=embeds)
-
-        message = {
-            "content": text,
-            "embeds": [
-                {
-                    "fields": [{"name": field.get("title", ""), "value": field.get("value", ""), "inline": True} for field in fields],
-                    "color": 1127128
-                }
-            ]
-        }
-
         discord.execute()
