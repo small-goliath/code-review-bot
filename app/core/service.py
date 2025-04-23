@@ -90,8 +90,11 @@ class Webhook(ABC):
         info = self._get_review_info()
         old_state, new_state = self.message_format.old_state, self.message_format.new_state
         state_map = {0: '`Open`', 1: '`Closed`'}
-        # TODO: gitlab에서는 old_state가 없음
-        text = f"리뷰 상태가 {state_map[old_state]}에서 {state_map[new_state]}로 변경되었습니다: *{title}* ({info['review_id']})"
+
+        if state_map[old_state]:
+            text = f"리뷰 상태가 {state_map[old_state]}에서 {state_map[new_state]}로 변경되었습니다: *{title}* ({info['review_id']})"
+        else:
+            text = f"리뷰 상태가 {state_map[new_state]}로 변경되었습니다: *{title}* ({info['review_id']})"
 
         fields = [
             {"title": "Project", "value": info['project_id'], "short": True},
@@ -108,8 +111,10 @@ class Webhook(ABC):
         # participant = review['data']['participant'].get('userName') or review['data']['participant'].get('userId', 'unknown')
         old_state, new_state = self.message_format.old_state, self.message_format.new_state
         state_map = {0: '`Unread`', 1: '`Read`', 2: '`Accepted`', 3: '`Rejected`'}
-        # TODO: gitlab에서는 old_state가 없음
-        text = f"*{info['actor']}*님이 {state_map[old_state]}에서 {state_map[new_state]}로 변경하였습니다: *{title}* ({info['review_id']})"
+        if state_map[old_state]:
+            text = f"리뷰 상태가 {state_map[old_state]}에서 {state_map[new_state]}로 변경되었습니다: *{title}* ({info['review_id']})"
+        else:
+            text = f"리뷰 상태가 {state_map[new_state]}로 변경되었습니다: *{title}* ({info['review_id']})"
 
         fields = [
             {"title": "Project", "value": info['project_id'], "short": True},
