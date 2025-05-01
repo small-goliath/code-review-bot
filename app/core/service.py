@@ -39,6 +39,10 @@ class CodeReviewTool(ABC):
     async def add_comment(self, comments: list[str]):
         pass
 
+    @abstractmethod
+    async def add_review_comment(self, comments: list[str]):
+        pass
+
 class Webhook(ABC):
     log = get_logger("notification")
 

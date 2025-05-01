@@ -76,10 +76,10 @@ class WebhookMessage():
                               url=gitlab_event.get('object_attributes', {}).get('url', settings.GITLAB_BASE_URL))
     
     async def from_github(github_event: dict, review_details: List[Dict[str, Any]]) -> 'WebhookMessage' :
-        if github_event['action'] == 'opened' and github_event['pull_request']:
+        if (github_event['action'] == 'opened' or github_event['action'] == 'reopened') and github_event['pull_request']:
             event_type = 'pr'
             url = github_event['pull_request']['html_url']
-        elif ((github_event['action'] == 'created') or (github_event['action'] == 'submitted')) and github_event['comment']:
+        elif (github_event['action'] == 'created' or github_event['action'] == 'submitted') and github_event.get('comment', None):
             event_type = 'comment'
             url = github_event['comment']['html_url']
         else:

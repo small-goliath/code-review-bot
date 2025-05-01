@@ -52,7 +52,7 @@ async def upsource_webhook(request: Request):
                 review_comments.append(comment)
 
         if review_comments:
-            await github.add_comment(review_comments)
+            await github.add_review_comment(review_comments)
         else:
             log.warning("생성된 리뷰 코멘트가 없습니다.")
 

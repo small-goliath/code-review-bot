@@ -1,3 +1,4 @@
+import json
 from github import Github as PyGithub
 from github import Auth as PyGithubAuth
 from github.PullRequest import PullRequest
@@ -48,11 +49,27 @@ class Github(CodeReviewTool):
             for file in files
         ]
 
-    async def get_code(self, file_path: str, ref: str) -> str:
-        pass
-
-    async def add_comment(self, comments: list[str]) -> None:
+    async def add_comment(self, comments: list[str]):
         comment = "\n\n".join(comments)
         repo = self.github.get_repo(self.repo_name)
         pr: PullRequest = repo.get_pull(self.pr_number)
         pr.create_issue_comment(comment)
+
+    async def add_review_comment(self, comments: list[str]):
+        repo = self.github.get_repo(self.repo_name)
+        pr: PullRequest = repo.get_pull(self.pr_number)
+
+        for comment in comments:
+            comment = comment.removeprefix("```json").removesuffix("```")
+            comment_detail = json.loads(comment)
+            if isinstance(comment_detail, list):
+                for detail in comment_detail:
+                    pr.create_review_comment(body=detail['body'],
+                                        path=detail['path'],
+                                        line=detail['start_line'],
+                                        commit=pr.get_commits().reversed[0])
+            else:
+                pr.create_review_comment(body=comment_detail['body'],
+                                    path=comment_detail['path'],
+                                    line=comment_detail['start_line'],
+                                    commit=pr.get_commits().reversed[0])
