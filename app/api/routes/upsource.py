@@ -26,16 +26,14 @@ async def upsource_webhook(request: Request):
                                                 base_url=settings.UPSOURCE_BASE_URL,
                                                 username=settings.UPSOURCE_USERNAME,
                                                 password=settings.UPSOURCE_PASSWORD,
-                                                project_id=project_id,
-                                                review_id=review_id,
-                                                revisions=revisions)
+                                                event=event)
 
         review_details = await upsource.get_review_details()
         message_format = await WebhookMessage.from_upsource(event, review_details['result']['title'])
         webhook = adapter.get_notification(webhook=settings.WEBHOOK,
                                            uri=settings.WEBHOOK_URI,
-                                           message_format=message_format,
-                                           code_review_url=upsource.base_url)
+                                           message_format=message_format)
+        
         asyncio.create_task(webhook.send_message())
 
         if message_format.event_type != EventType.CREATED_REVIEW:

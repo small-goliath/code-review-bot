@@ -11,9 +11,9 @@ Upsource 또는 GitHub에서 리뷰(혹은 Pull Request)가 생성되면 자동�
   - 알림 채널(Google Chat, Slack) 알림
   - 변경된 파일을 수집하고 AI 코드 리뷰 수행
 
-- **GitHub PR 감지**
-  - GitHub Webhook을 통해 Pull Request 생성 이벤트 수신
-  - PR에서 변경된 코드 기반으로 AI 리뷰 수행 및 알림 전송
+- **GitHub PR & GitLab MR 감지**
+  - Webhook을 통해 PR/MR 생성 이벤트 수신
+  - 변경된 코드 기반으로 AI 리뷰 수행 및 알림 전송
 
 - **AI 코드 리뷰 자동화**
   - OpenAI GPT 모델을 통해 코드 변경 내용을 분석

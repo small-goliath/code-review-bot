@@ -7,7 +7,8 @@ from app.logger import get_logger
 class CodeReviewTool(ABC):
     log = get_logger("code-review-tool")
 
-    def __init__(self, base_url: str,
+    def __init__(self,
+                 base_url: str = None,
                  username: str = None,
                  password: str = None,
                  connect_timeout: float = 10.0,
@@ -43,11 +44,9 @@ class Webhook(ABC):
 
     def __init__(self,
                  uri: str,
-                 message_format: WebhookMessage,
-                 code_review_url: str):
+                 message_format: WebhookMessage):
         self.message_format = message_format
         self.uri = uri
-        self.code_review_url = code_review_url
 
     @abstractmethod
     async def send_message(self):
@@ -59,7 +58,7 @@ class Webhook(ABC):
             'project_id': self.message_format.project_name,
             'actor': self.message_format.actor_name,
             'reviewers': self.message_format.reviewers,
-            'url': f"{self.code_review_url}/{self.message_format.project_name}/review/{self.message_format.review_id}",
+            'url': self.message_format.url
         }
 
     def _build_attachment(self, fields: list[dict], fallback: str, color: str) -> Dict[str, Any]:
@@ -128,16 +127,12 @@ class Webhook(ABC):
 
     def _get_message_by_created_discussion(self) -> Dict[str, Any]:
         info = self._get_review_info()
-        url = f"{self.code_review_url}/{info['project_id']}"
-        if info['review_id']:
-            url += f"/review/{info['review_id']}"
-
         text = f"*{info['actor']}*님이 댓글을 작성했습니다: *{info['project_id']}*"
         fields = [
             {"title": "Project", "value": info['project_id'], "short": True},
             {"title": "Participant(s)", "value": info['reviewers'], "short": True},
             {"title": "Comment", "value": self.message_format.comment},
-            {"title": "link", "value": f"<{url}>"}
+            {"title": "link", "value": f"<{info['url']}>"}
         ]
 
         return {"text": text, **self._build_attachment(fields, text, "#3AA3E3")}

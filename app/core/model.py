@@ -1,5 +1,6 @@
 from enum import Enum, auto
-from typing import Optional
+from typing import Any, Dict, List, Optional
+from app.config import settings
 
 class EventType(Enum):
     CREATED_REVIEW = auto()
@@ -14,13 +15,14 @@ class EventType(Enum):
         except KeyError:
             raise Exception(f'{event_type}은 지원되지 않습니다.')
 
-
 EVENT_TYPE_MAPPING = {
     'ReviewCreatedFeedEventBean': EventType.CREATED_REVIEW,
     'merge_request': EventType.CREATED_REVIEW,
     'ReviewStateChangedFeedEventBean': EventType.CHANGED_REVIEW_STATE,
     'ParticipantStateChangedFeedEventBean': EventType.CHANGED_REVIEWER_STATE,
     'DiscussionFeedEventBean': EventType.CREATED_COMMENT,
+    'pr': EventType.CREATED_REVIEW,
+    'comment': EventType.CREATED_COMMENT,
 }
 
 class WebhookMessage():
@@ -34,6 +36,7 @@ class WebhookMessage():
                  old_state: Optional[str] = None,
                  new_state: Optional[str] = None,
                  comment: Optional[str] = None,
+                 url: Optional[str] = None,
                  ):
         self.title = title
         self.project_name = project_name
@@ -44,6 +47,7 @@ class WebhookMessage():
         self.old_state = old_state
         self.new_state = new_state
         self.comment = comment
+        self.url = url
 
     async def from_upsource(upsource_event: dict, title: str) -> 'WebhookMessage' :
         return WebhookMessage(title = title,
@@ -54,9 +58,11 @@ class WebhookMessage():
                               review_id = upsource_event['data']['base']['reviewId'],
                               old_state = upsource_event['data'].get('oldState', None),
                               new_state = upsource_event['data'].get('newState', None),
-                              comment = upsource_event['data'].get('commentText', None))
+                              comment = upsource_event['data'].get('commentText', None),
+                              url = f"{settings.UPSOURCE_BASE_URL}/{upsource_event['projectId']}/review/{upsource_event['data']['base']['reviewId']}")
     
     async def from_gitlab(gitlab_event: dict) -> 'WebhookMessage' :
+        # TODO: MR 외 title
         return WebhookMessage(title=f"{gitlab_event['object_attributes']['source_branch']} into {gitlab_event['object_attributes']['target_branch']}",
                               project_name=gitlab_event['project']['name'],
                               event_type = EventType.get_type(gitlab_event['event_type']),
@@ -66,14 +72,23 @@ class WebhookMessage():
                               reviewers = ', '.join(user.get('name', '') for user in gitlab_event.get('reviewers',[])),
                               review_id = gitlab_event['object_attributes']['iid'],
                               new_state = gitlab_event['object_attributes'].get('action', None),
-                              comment = gitlab_event.get('commit', {}).get('message', None))
+                              comment = gitlab_event.get('commit', {}).get('message', None),
+                              url=gitlab_event.get('object_attributes', {}).get('url', settings.GITLAB_BASE_URL))
     
-    async def from_github(github_event: dict) -> 'WebhookMessage' :
-        return WebhookMessage(title=f"{github_event['object_attributes']['source_branch']} into {github_event['object_attributes']['target_branch']}",
-                              project_name=github_event['project']['name'],
-                              event_type = EventType.get_type(github_event['event_type']),
-                              actor_name = github_event['user']['name'],
-                              reviewers = ', '.join(user.get('name', '') for user in github_event.get('reviewers',[])),
-                              review_id = github_event['number'],
+    async def from_github(github_event: dict, review_details: List[Dict[str, Any]]) -> 'WebhookMessage' :
+        if github_event['action'] == 'opened' and github_event['pull_request']:
+            event_type = 'pr'
+            url = github_event['pull_request']['html_url']
+        elif ((github_event['action'] == 'created') or (github_event['action'] == 'submitted')) and github_event['comment']:
+            event_type = 'comment'
+            url = github_event['comment']['html_url']
+            
+        return WebhookMessage(title=f"{github_event['repository']['full_name']}",
+                              project_name=github_event['repository']['name'],
+                              event_type = EventType.get_type(event_type),
+                              actor_name = github_event['sender']['login'],
+                              reviewers = ', '.join(review_detail.get('member_name', '') for review_detail in review_details),
+                              review_id = github_event.get('pull_request', {}).get('id', "#0"),
                               new_state = github_event.get('action', None),
-                              comment = github_event.get('commit', {}).get('message', None))
+                              comment = github_event.get('comment', {}).get('body', None),
+                              url=url)

@@ -20,14 +20,12 @@ async def upsource_webhook(request: Request):
         gitlab = adapter.get_code_review_tool(code_review_tool=settings.CODE_REVIEW_TOOL,
                                               base_url=settings.GITLAB_BASE_URL,
                                               private_token=settings.GITLAB_ACCESS_TOKEN,
-                                              project_id=event['project']['id'],
-                                              mr_iid=event['object_attributes']['iid'])
+                                              event=event)
         
         message_format = await WebhookMessage.from_gitlab(event)
         webhook = adapter.get_notification(webhook=settings.WEBHOOK,
                                            uri=settings.WEBHOOK_URI,
-                                           message_format=message_format,
-                                           code_review_url=gitlab.base_url)
+                                           message_format=message_format)
         asyncio.create_task(webhook.send_message())
 
         if message_format.event_type != EventType.CREATED_REVIEW:
@@ -54,7 +52,7 @@ async def upsource_webhook(request: Request):
             if comment:
                 review_comments.append(comment)
 
-        # upsource 코드 리뷰 내용 작성
+        # 코드 리뷰 내용 작성
         if review_comments:
             await gitlab.add_comment(review_comments)
         else:
