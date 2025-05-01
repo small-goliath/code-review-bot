@@ -82,7 +82,10 @@ class WebhookMessage():
         elif ((github_event['action'] == 'created') or (github_event['action'] == 'submitted')) and github_event['comment']:
             event_type = 'comment'
             url = github_event['comment']['html_url']
-            
+        else:
+            event_type = 'none'
+            url = github_event['repository']['html_url']
+
         return WebhookMessage(title=f"{github_event['repository']['full_name']}",
                               project_name=github_event['repository']['name'],
                               event_type = EventType.get_type(event_type),
