@@ -45,7 +45,7 @@ async def upsource_webhook(request: Request):
 
             # openai 코드 리뷰 요청
             gpt = GPT()
-            comment = await gpt.generate_code_review_by_diff(
+            comment = await gpt.generate_structor_output_code_review_by_diff(
                 file_name=file['file_name'], diff=file['patch']
             )
             if comment:
