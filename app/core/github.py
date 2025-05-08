@@ -73,3 +73,7 @@ class Github(CodeReviewTool):
                                     path=comment_detail['path'],
                                     line=comment_detail['start_line'],
                                     commit=pr.get_commits().reversed[0])
+
+
+    async def get_code(self, file: Dict[str, str]) -> dict:
+        pass
