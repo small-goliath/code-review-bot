@@ -65,8 +65,8 @@ class Github(CodeReviewTool):
 
         for comment in comments:
             comment = comment.removeprefix("```json").removesuffix("```")
-            comment_detail = json.loads(comment)
             try:
+                comment_detail = json.loads(comment)
                 if isinstance(comment_detail, list):
                     for detail in comment_detail:
                         pr.create_review_comment(body=detail['body'],
