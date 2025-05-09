@@ -4,8 +4,12 @@ from github import Auth as PyGithubAuth
 from github.PullRequest import PullRequest
 from typing import Any, Dict, List, Optional
 from app.core.service import CodeReviewTool
+from app.logger import get_logger
+
 
 class Github(CodeReviewTool):
+    log = get_logger("code-review-tool")
+
     def __init__(self,
                  private_token: str,
                  repo_name: str,
@@ -62,17 +66,21 @@ class Github(CodeReviewTool):
         for comment in comments:
             comment = comment.removeprefix("```json").removesuffix("```")
             comment_detail = json.loads(comment)
-            if isinstance(comment_detail, list):
-                for detail in comment_detail:
-                    pr.create_review_comment(body=detail['body'],
-                                        path=detail['path'],
-                                        line=detail['start_line'],
+            try:
+                if isinstance(comment_detail, list):
+                    for detail in comment_detail:
+                        pr.create_review_comment(body=detail['body'],
+                                            path=detail['path'],
+                                            line=detail['start_line'],
+                                            commit=pr.get_commits().reversed[0])
+                else:
+                    pr.create_review_comment(body=comment_detail['body'],
+                                        path=comment_detail['path'],
+                                        line=comment_detail['start_line'],
                                         commit=pr.get_commits().reversed[0])
-            else:
-                pr.create_review_comment(body=comment_detail['body'],
-                                    path=comment_detail['path'],
-                                    line=comment_detail['start_line'],
-                                    commit=pr.get_commits().reversed[0])
+            except:
+                self.log.error(f"cannot create comment {comment}")
+                continue
 
 
     async def get_code(self, file: Dict[str, str]) -> dict:
