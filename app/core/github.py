@@ -63,10 +63,13 @@ class Github(CodeReviewTool):
     async def add_review_comment(self, comments: list[str]):
         repo = self.github.get_repo(self.repo_name)
         pr: PullRequest = repo.get_pull(self.pr_number)
+        failed_comments = []
 
         for comment in comments:
             comment = comment.removeprefix("```json").removesuffix("```")
             comment = re.sub(r'\\`', '`', comment)
+            comment = re.sub(r'\\"', '`', comment)
+            comment = re.sub(r'``', '`', comment)
             try:
                 comment_detail = json.loads(comment)
                 if isinstance(comment_detail, list):
@@ -81,8 +84,11 @@ class Github(CodeReviewTool):
                                         line=comment_detail['start_line'],
                                         commit=pr.get_commits().reversed[0])
             except:
-                self.log.error(f"cannot create comment {comment}")
+                failed_comments.append(comment)
                 continue
+        
+        if failed_comments:
+            await self.add_comment(failed_comments)
 
 
     async def get_code(self, file: Dict[str, str]) -> dict:
