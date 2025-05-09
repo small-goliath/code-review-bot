@@ -1,4 +1,5 @@
 import json
+import re
 from github import Github as PyGithub
 from github import Auth as PyGithubAuth
 from github.PullRequest import PullRequest
@@ -65,6 +66,7 @@ class Github(CodeReviewTool):
 
         for comment in comments:
             comment = comment.removeprefix("```json").removesuffix("```")
+            comment = re.sub(r'\\`', '`', comment)
             try:
                 comment_detail = json.loads(comment)
                 if isinstance(comment_detail, list):
